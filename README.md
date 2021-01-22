@@ -30,7 +30,7 @@ Messages can be sent similarly to p2p-cli. Additionally, messages will be rebroa
 ## Run a lighthouse in Docker on port 7979
 ```
 docker build https://github.com/tehzevo/hashcast.git -t zevo/hashcast
-docker run -d --restart unless-stopped --name hashcast zevo/hashcast -p 7979
+docker run -d --restart unless-stopped -p 7979:7979 --name hashcast zevo/hashcast -p 7979
 ```
 
 # TODO
