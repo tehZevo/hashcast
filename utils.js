@@ -24,16 +24,11 @@ function hashMessage(message)
   return hash.toString(16).padStart(64, "0");
 }
 
-//TODO: for now, measure difficulty in "0s" (0-64)
-function mine(data, difficulty)
+function mine(data, maxHash)
 {
   //32bit nonce, message
   var nonce = 0;
   var foundHash = false;
-
-  //make some zeros, fill rest with fs
-  var maxHash = [...Array(difficulty).keys()].map((e) => "0").join("").padEnd(64, "f");
-  console.log(maxHash)
 
   var message = null;
 
@@ -47,7 +42,7 @@ function mine(data, difficulty)
 
     var hash = hashMessage(message);
 
-    console.log("try", hash);
+    // console.log("try", hash);
 
     if(BigInt("0x"+hash) <= BigInt("0x" + maxHash))
     {

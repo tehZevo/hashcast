@@ -101,14 +101,17 @@ function onMessage(message)
 
 function compareHashes(a, b)
 {
+  //TODO: pretty costly, maybe store hashes in messages
+  a = U.hashMessage(a);
+  b = U.hashMessage(b);
   a = BigInt("0x" + a);
   b = BigInt("0x" + b);
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
-//TODO: for now difficulty should be 0..64
 function sendMessage(data, difficulty)
 {
+  console.log("mining message, looking for hash under", difficulty)
   var message = U.mine(data, difficulty);
 
   //add to queue in the normal fashion
@@ -142,6 +145,8 @@ async function update()
   var message = mempool.shift(); //remove first from mempool (strongest hash)
 
   await broadcast(message);
+
+  console.log("mempool", mempool.length);
 
   setImmediate(update);
 }
@@ -183,5 +188,20 @@ rl.on('line', async function (line)
   }
 
   //TODO: convert to bytes?
-  sendMessage(line, defaultDiff);
+  //TODO: for now, measure difficulty in "0s" (0-64)
+  //make some zeros, fill rest with fs
+  //get next message hash (strongest hash)
+  //NOTE: this is a pretty naive way of difficulty estimation, for instance, it could cause a DOS if someone inputs a crazy high hash, but that might be ok, idk.
+  var maxHash = [...Array(64).keys()].map((e) => "f").join("");
+  if(mempool.length > 0)
+  {
+    maxHash = U.hashMessage(mempool[0]);
+    console.log("type", typeof maxHash)
+    console.log("0x" + maxHash)
+    maxHash = BigInt("0x" + maxHash) - BigInt("0x1");
+    maxHash = maxHash.toString(16);
+  }
+
+  //var maxHash = [...Array(defaultDiff).keys()].map((e) => "0").join("").padEnd(64, "f");
+  sendMessage(line, maxHash);
 });
