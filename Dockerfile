@@ -6,7 +6,7 @@ COPY package*.json ./
 
 RUN npm install
 
-COPY . .
+COPY . /
 
 ENTRYPOINT ["npm", "run", "examples/lighthouse.js"]
 

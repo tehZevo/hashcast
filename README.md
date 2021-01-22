@@ -27,6 +27,12 @@ npm run client-cli -- -p 3000
 ```
 Messages can be sent similarly to p2p-cli. Additionally, messages will be rebroadcast to other servers
 
+## Run a lighthouse in Docker on port 7979
+```
+docker build https://github.com/tehzevo/hashcast.git -t zevo/hashcast
+docker run -d --restart unless-stopped --name hashcast zevo/hashcast -p 7979
+```
+
 # TODO
 * spec for message format (eg [time, nonce, data]); then pass these arrays around instead of json
   * perhaps include length of message + magic number at the start?
