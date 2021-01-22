@@ -16,6 +16,5 @@ npm run cli -- -p 3000 -n http://example.com http://example.org http://example.n
 Type messages into the console to hash and broadcast messages to all peers
 
 # TODO
-* lighthouse/lighthouse client
 * spec for message format (eg [time, nonce, data]); then pass these arrays around instead of json
   * perhaps include length of message + magic number at the start?
