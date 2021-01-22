@@ -9,11 +9,23 @@ npm install
 ```
 
 # Usage
-Start a p2p node listening on port 3000 and connected to example.com, example.org, and example.net:
+
+## Start a p2p node listening on port 3000 and connected to example.com, example.org, and example.net:
 ```
-npm run cli -- -p 3000 -n http://example.com http://example.org http://example.net
+npm run p2p-cli -- -p 3000 -n http://example.com http://example.org http://example.net
 ```
 Type messages into the console to hash and broadcast messages to all peers
+
+## Start a lighthouse (server) on port 3000:
+```
+npm run lightouse -- -p 3000
+```
+
+## Run the lighthouse client connected to example.com, example.org, and example.net:
+```
+npm run client-cli -- -p 3000
+```
+Messages can be sent similarly to p2p-cli. Additionally, messages will be rebroadcast to other servers
 
 # TODO
 * spec for message format (eg [time, nonce, data]); then pass these arrays around instead of json
