@@ -8,6 +8,6 @@ RUN npm install
 
 COPY . .
 
-ENTRYPOINT ["npm", "run", "examples/lighthouse.js", "--"]
+ENTRYPOINT ["node", "examples/lighthouse.js"]
 
 CMD ["-p", "7979"]
