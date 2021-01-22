@@ -1,8 +1,4 @@
-var ProtoPost = require("protopost");
-
 var U = require("./utils.js");
-
-var protopostClient = ProtoPost.client;
 
 //TODO: move to utils?
 function compareHashes(a, b)
@@ -17,9 +13,8 @@ function compareHashes(a, b)
 
 class HashCast
 {
-  constructor(maxMessageSize, maxTime, mempoolSize, discardPileSize, port)
+  constructor(maxMessageSize, maxTime, mempoolSize, discardPileSize, cbBroadcast)
   {
-    this.peers = [];
     this.mempool = [];
     //TODO: make this an object/set or something
     this.discardPile = [];
@@ -29,23 +24,10 @@ class HashCast
     this.mempoolSize = mempoolSize;
     this.discardPileSize = discardPileSize;
 
-    new ProtoPost({
-      // broadcast,
-      // send: (e) => sendMessage(e.data, e.difficulty)
-      broadcast: (data) => this.onMessage(data)
-    }).start(port);
+    //function to call when a new message is ready to be broadcast
+    this.cbBroadcast = cbBroadcast;
 
     this.update();
-  }
-
-  addPeer(peer)
-  {
-    this.peers.push(peer);
-  }
-
-  removePeer(peer)
-  {
-    this.peers = this.peers.filter((e) => e != peer);
   }
 
   addToDiscard(hash)
@@ -126,21 +108,7 @@ class HashCast
     this.onMessage(message);
   }
 
-  async broadcast(message)
-  {
-    var hash = U.hashMessage(message);
-    console.log("broadcasting message with hash", hash);
-
-    //send to all peers
-    await Promise.all(this.peers.map((peer) => {
-      console.log("sending to", peer);
-      return protopostClient(peer, "/broadcast", message);
-    }));
-
-    console.log("done broadcast")
-  }
-
-  async update()
+  update()
   {
     if(this.mempool.length == 0)
     {
@@ -153,7 +121,7 @@ class HashCast
     //hashes should already be sorted
     var message = this.mempool.shift(); //remove first from mempool (strongest hash)
 
-    await this.broadcast(message);
+    this.cbBroadcast(message);
 
     console.log("mempool", this.mempool.length);
 

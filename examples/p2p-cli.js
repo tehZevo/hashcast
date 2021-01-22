@@ -1,10 +1,16 @@
 var readline = require('readline');
 var { Command } = require('commander');
-var HashCast = require("./HashCast.js");
+
+var ProtoPost = require("protopost");
+var protopostClient = ProtoPost.client;
+
+var HashCast = require("../src/HashCast.js");
+var U = require("../src/utils.js");
 
 //TODO: use b64 byte arrays instead of strings...
 //TODO: web interface
-//TODO: lock ability to do work (hashMessage) to requests from localhost
+
+//protopost cli example, type messages into console to hash and broadcast to peers
 
 const program = new Command();
 program.version('0.0.0');
@@ -18,17 +24,33 @@ program
   .option("-d, --discard <number>", "max hashes in discard pile", 1000000, parseInt)
   .parse(process.argv);
 
+//callback for broadcasting
+async function broadcast(message)
+{
+  var hash = U.hashMessage(message);
+  console.log("broadcasting message with hash", hash);
+
+  await Promise.all(program.peers.map((peer) => {
+    console.log("sending to", peer);
+    return protopostClient(peer, "/broadcast", message);
+  }));
+
+  console.log("done broadcast");
+}
+
 //create caster
 var caster = new HashCast(
   program.blockSize,
   program.maxTime,
   program.mempool,
   program.discard,
-  program.port
+  broadcast
 );
 
-//add peers
-program.peers.forEach((e) => caster.addPeer(e));
+//add protopost listener
+new ProtoPost({
+  broadcast: (data) => caster.onMessage(data)
+}).start(program.port);
 
 //interaction (sending messages)
 var rl = readline.createInterface({
