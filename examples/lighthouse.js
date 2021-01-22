@@ -1,28 +1,27 @@
-var readline = require('readline');
+const WebSocket = require('ws');
 var { Command } = require('commander');
-
-var ProtoPost = require("protopost");
-var protopostClient = ProtoPost.client;
 
 var HashCast = require("../src/HashCast.js");
 var U = require("../src/utils.js");
-
-//TODO: use b64 byte arrays instead of strings...
-//TODO: web interface
-
-//protopost cli example, type messages into console to hash and broadcast to peers
 
 const program = new Command();
 program.version('0.0.0');
 
 program
   .option('-p, --port <number>', "port", 3000, parseInt)
-  .option("-n, --peers [peers...]", "peers", [])
   .option("-b, --block-size <number>", "block size (bytes)", 1024, parseInt)
   .option("-t, --max-time <number>", "max time difference (in both directions) in seconds", 60, parseInt)
   .option("-m, --mempool <number>", "max blocks in mempool", 1000, parseInt)
   .option("-d, --discard <number>", "max hashes in discard pile", 1000000, parseInt)
   .parse(process.argv);
+
+const wss = new WebSocket.Server({ port: program.port });
+
+wss.on('connection', function connection(ws) {
+  ws.on('message', function incoming(message) {
+    caster.onMessage(JSON.parse(message));
+  });
+});
 
 //callback for broadcasting
 async function send(message)
@@ -30,10 +29,12 @@ async function send(message)
   var hash = U.hashMessage(message);
   console.log("broadcasting message with hash", hash);
 
-  await Promise.all(program.peers.map((peer) => {
-    console.log("sending to", peer);
-    return protopostClient(peer, "/broadcast", message);
-  }));
+  //send to all clients
+  wss.clients.forEach(function each(client) {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(message));
+    }
+  });
 
   console.log("done broadcast");
 }
@@ -52,27 +53,3 @@ var caster = new HashCast(
   receive,
   send
 );
-
-//add protopost listener
-new ProtoPost({
-  broadcast: (data) => caster.onMessage(data)
-}).start(program.port);
-
-//interaction (sending messages)
-var rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-  terminal: false
-});
-
-rl.on('line', async function (line)
-{
-  if(line == "")
-  {
-    return;
-  }
-
-  //TODO: convert message to bytes?
-
-  caster.sendMessage(line, caster.getDifficulty());
-});

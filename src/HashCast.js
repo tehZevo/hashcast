@@ -13,7 +13,7 @@ function compareHashes(a, b)
 
 class HashCast
 {
-  constructor(maxMessageSize, maxTime, mempoolSize, discardPileSize, cbBroadcast)
+  constructor(maxMessageSize, maxTime, mempoolSize, discardPileSize, cbReceive, cbSend)
   {
     this.mempool = [];
     //TODO: make this an object/set or something
@@ -24,8 +24,11 @@ class HashCast
     this.mempoolSize = mempoolSize;
     this.discardPileSize = discardPileSize;
 
+    //function to call when a message is received
+    this.cbReceive = cbReceive;
+
     //function to call when a new message is ready to be broadcast
-    this.cbBroadcast = cbBroadcast;
+    this.cbSend = cbSend;
 
     this.update();
   }
@@ -95,7 +98,11 @@ class HashCast
     //add to mempool
     this.addToMempool(message);
 
-    console.log(">> got message:", message.data);
+    if(this.cbReceive != null)
+    {
+      this.cbReceive(message)
+    }
+
   }
 
   /** mines and sends message */
@@ -121,7 +128,10 @@ class HashCast
     //hashes should already be sorted
     var message = this.mempool.shift(); //remove first from mempool (strongest hash)
 
-    this.cbBroadcast(message);
+    if(this.cbSend != null)
+    {
+      this.cbSend(message);
+    }
 
     console.log("mempool", this.mempool.length);
 

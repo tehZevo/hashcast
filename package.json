@@ -8,12 +8,15 @@
     "commander": "^6.1.0",
     "crypto-js": "^4.0.0",
     "express": "^4.17.1",
-    "protopost": "git+https://github.com/tehzevo/protopost.git"
+    "protopost": "git+https://github.com/tehzevo/protopost.git",
+    "ws": "^7.4.2"
   },
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "cli": "node examples/p2p-cli.js"
+    "p2p-cli": "node examples/p2p-cli.js",
+    "lighthouse": "node examples/lighthouse.js",
+    "client-cli": "node examples/lighthouse-client-cli.js"
   },
   "author": "Zevo",
   "license": "MIT"

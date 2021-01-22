@@ -1,28 +1,25 @@
 var readline = require('readline');
+const WebSocket = require('ws');
 var { Command } = require('commander');
-
-var ProtoPost = require("protopost");
-var protopostClient = ProtoPost.client;
 
 var HashCast = require("../src/HashCast.js");
 var U = require("../src/utils.js");
 
-//TODO: use b64 byte arrays instead of strings...
-//TODO: web interface
-
-//protopost cli example, type messages into console to hash and broadcast to peers
-
 const program = new Command();
 program.version('0.0.0');
 
+//TODO: arg for disallowing rebroadcast from client
+
 program
-  .option('-p, --port <number>', "port", 3000, parseInt)
-  .option("-n, --peers [peers...]", "peers", [])
+  .option("-l, --lighthouses [lighthouses...]", "lighthouse urls", [])
   .option("-b, --block-size <number>", "block size (bytes)", 1024, parseInt)
   .option("-t, --max-time <number>", "max time difference (in both directions) in seconds", 60, parseInt)
   .option("-m, --mempool <number>", "max blocks in mempool", 1000, parseInt)
   .option("-d, --discard <number>", "max hashes in discard pile", 1000000, parseInt)
   .parse(process.argv);
+
+//connect to all lighthouses
+var lighthouses = program.lighthouses.map((e) => new WebSocket(e));
 
 //callback for broadcasting
 async function send(message)
@@ -30,10 +27,9 @@ async function send(message)
   var hash = U.hashMessage(message);
   console.log("broadcasting message with hash", hash);
 
-  await Promise.all(program.peers.map((peer) => {
-    console.log("sending to", peer);
-    return protopostClient(peer, "/broadcast", message);
-  }));
+  //send to all lighthouses
+  //TODO: arg for not rebroadcasting
+  lighthouses.forEach((e) => e.send(JSON.stringify(message)));
 
   console.log("done broadcast");
 }
@@ -42,6 +38,13 @@ async function receive(message)
 {
   console.log(">> got message:", message.data);
 }
+
+lighthouses.forEach((e) =>
+{
+  e.on("message", function incoming(message) {
+    caster.onMessage(JSON.parse(message));
+  });
+})
 
 //create caster
 var caster = new HashCast(
@@ -52,11 +55,6 @@ var caster = new HashCast(
   receive,
   send
 );
-
-//add protopost listener
-new ProtoPost({
-  broadcast: (data) => caster.onMessage(data)
-}).start(program.port);
 
 //interaction (sending messages)
 var rl = readline.createInterface({
