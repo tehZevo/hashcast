@@ -1,20 +1,13 @@
 var readline = require('readline');
-var ProtoPost = require("protopost");
-var express = require("express");
-const { Command } = require('commander');
-var app = express();
-var U = require("./utils.js");
-
-var protopostClient = ProtoPost.client;
-
-var defaultDiff = 2;
-
-const program = new Command();
-program.version('0.0.0');
+var { Command } = require('commander');
+var HashCast = require("./HashCast.js");
 
 //TODO: use b64 byte arrays instead of strings...
 //TODO: web interface
 //TODO: lock ability to do work (hashMessage) to requests from localhost
+
+const program = new Command();
+program.version('0.0.0');
 
 program
   .option('-p, --port <number>', "port", 3000, parseInt)
@@ -25,153 +18,17 @@ program
   .option("-d, --discard <number>", "max hashes in discard pile", 1000000, parseInt)
   .parse(process.argv);
 
-var peers = program.args;
+//create caster
+var caster = new HashCast(
+  program.blockSize,
+  program.maxTime,
+  program.mempool,
+  program.discard,
+  program.port
+);
 
-var mempool = [];
-//TODO: make this an object/set or something
-var discardPile = [];
-
-function addToDiscard(hash)
-{
-  //add to front so hopefully searching duped messages will be faster
-  discardPile.unshift(hash);
-
-  //remove old hashes
-  while(discardPile.length > program.discard)
-  {
-    discardPile.pop();
-  }
-}
-
-function addToMempool(message)
-{
-  //add message to mempool
-  mempool.push(message);
-
-  //sort ascending according to hash (lower hashes = stronger)
-  mempool.sort(compareHashes);
-
-  //trim off other messages
-  while(mempool.length > program.mempool)
-  {
-    mempool.pop();
-  }
-}
-
-function onMessage(message)
-{
-  //TODO: gzip b64?
-
-  //hash message
-  var hash = U.hashMessage(message);
-
-  //if message length > max block size, discard
-  if(message.data.length > program.blockSize)
-  {
-    console.log("message " + hash + " too big");
-
-    return;
-  }
-
-  //verify message time
-  var dTime = Math.abs(Date.now() - message.time) / 1000;
-  if(dTime > program.maxTime)
-  {
-    console.log("message " + hash + " too old or from too far in the future");
-
-    return;
-  }
-
-  //check discard pile
-  if(discardPile.includes(hash))
-  {
-    console.log("already seen message " + hash);
-
-    return;
-  }
-
-  //add to discard pile
-  addToDiscard(hash);
-
-  //add to mempool
-  addToMempool(message);
-
-  console.log(">> got message:", message.data);
-}
-
-function compareHashes(a, b)
-{
-  //TODO: pretty costly, maybe store hashes in messages
-  a = U.hashMessage(a);
-  b = U.hashMessage(b);
-  a = BigInt("0x" + a);
-  b = BigInt("0x" + b);
-  return a < b ? -1 : a > b ? 1 : 0;
-}
-
-function sendMessage(data, difficulty)
-{
-  console.log("mining message, looking for hash under", difficulty)
-  var message = U.mine(data, difficulty);
-
-  //add to queue in the normal fashion
-  onMessage(message);
-}
-
-async function broadcast(message)
-{
-  var hash = U.hashMessage(message);
-  console.log("broadcasting message with hash", hash);
-
-  //send to all peers
-  await Promise.all(program.peers.map((peer) => {
-    console.log("sending to", peer);
-    return protopostClient(peer, "/broadcast", message);
-  }));
-
-  console.log("done broadcast")
-}
-
-async function update()
-{
-  if(mempool.length == 0)
-  {
-    setTimeout(update, 1000);
-
-    return;
-  }
-
-  //hashes should already be sorted
-  var message = mempool.shift(); //remove first from mempool (strongest hash)
-
-  await broadcast(message);
-
-  console.log("mempool", mempool.length);
-
-  setImmediate(update);
-}
-
-function getDifficulty()
-{
-  //TODO: another method, for now just return hash of first in queue
-  if(mempool.length = 0)
-  {
-    return
-  }
-  return mempool[0]
-}
-
-update();
-
-var api = new ProtoPost({
-  // broadcast,
-  // send: (e) => sendMessage(e.data, e.difficulty)
-  broadcast: onMessage
-});
-
-app.use("/", api.router);
-
-app.listen(program.port, () => console.log(`Listening on port ${program.port}!`))
+//add peers
+program.peers.forEach((e) => caster.addPeer(e));
 
 //interaction (sending messages)
 var rl = readline.createInterface({
@@ -187,21 +44,7 @@ rl.on('line', async function (line)
     return;
   }
 
-  //TODO: convert to bytes?
-  //TODO: for now, measure difficulty in "0s" (0-64)
-  //make some zeros, fill rest with fs
-  //get next message hash (strongest hash)
-  //NOTE: this is a pretty naive way of difficulty estimation, for instance, it could cause a DOS if someone inputs a crazy high hash, but that might be ok, idk.
-  var maxHash = [...Array(64).keys()].map((e) => "f").join("");
-  if(mempool.length > 0)
-  {
-    maxHash = U.hashMessage(mempool[0]);
-    console.log("type", typeof maxHash)
-    console.log("0x" + maxHash)
-    maxHash = BigInt("0x" + maxHash) - BigInt("0x1");
-    maxHash = maxHash.toString(16);
-  }
+  //TODO: convert message to bytes?
 
-  //var maxHash = [...Array(defaultDiff).keys()].map((e) => "0").join("").padEnd(64, "f");
-  sendMessage(line, maxHash);
+  caster.sendMessage(line, caster.getDifficulty());
 });
