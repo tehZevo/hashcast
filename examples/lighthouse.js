@@ -23,6 +23,8 @@ wss.on('connection', function connection(ws) {
   });
 });
 
+console.log("listening on " + program.port);
+
 //callback for broadcasting
 async function send(message)
 {
