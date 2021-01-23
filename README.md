@@ -23,7 +23,7 @@ npm run lightouse -- -p 3000
 
 ## Run the lighthouse client connected to example.com, example.org, and example.net:
 ```
-npm run client-cli -- -p 3000
+npm run client-cli -- -l http://example.com http://example.org http://example.net
 ```
 Messages can be sent similarly to p2p-cli. Additionally, messages will be rebroadcast to other servers
 
