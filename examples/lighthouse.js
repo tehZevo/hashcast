@@ -17,7 +17,7 @@ program
 
 const wss = new WebSocket.Server({ port: program.port });
 
-wss.on('connection', function connection(ws) {
+wss.on('connection', function connection(ws, req) {
   console.log(req.socket.remoteAddress, "connected");
 
   ws.on('message', function incoming(message) {
