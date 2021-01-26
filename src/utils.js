@@ -1,5 +1,5 @@
-var sha256 = require("crypto-js/sha256");
-var crypto = require("crypto-js");
+var sha256 = require("sha.js").sha256;
+
 const concatTypedArray = require('arraybuffer-concat');
 
 //thanks https://stackoverflow.com/questions/15761790/convert-a-32bit-integer-into-4-bytes-of-data-in-javascript/37863115
@@ -18,7 +18,9 @@ function hashMessage(message)
     message.data
   );
 
-  hash = sha256(crypto.lib.WordArray.create(plain));
+  hash = new sha256();
+  hash = hash.update(Buffer.from(plain)); //??
+  hash = hash.digest("hex");
   hash = BigInt("0x"+hash); //TODO: avoid string conversion?
 
   return hash.toString(16).padStart(64, "0");
