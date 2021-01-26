@@ -41,8 +41,24 @@ async function receive(message)
 
 lighthouses.forEach((e) =>
 {
-  e.on("message", function incoming(message) {
+  e.on("message", (message) =>
+  {
     caster.onMessage(JSON.parse(message));
+  });
+
+  e.on("error", (error) =>
+  {
+    console.log(error);
+  });
+
+  e.on("open", (e) =>
+  {
+    console.log("connected to", e);
+  });
+
+  e.on("close", (e) =>
+  {
+    console.log("disconnected from", e);
   });
 })
 

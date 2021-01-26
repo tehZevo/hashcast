@@ -36,3 +36,4 @@ docker run -d --restart unless-stopped -p 7979:7979 --name hashcast zevo/hashcas
 # TODO
 * spec for message format (eg [time, nonce, data]); then pass these arrays around instead of json
   * perhaps include length of message + magic number at the start?
+* webpack

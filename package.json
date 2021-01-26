@@ -11,12 +11,23 @@
     "protopost": "git+https://github.com/tehzevo/protopost.git",
     "ws": "^7.4.2"
   },
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "p2p-cli": "node examples/p2p-cli.js",
     "lighthouse": "node examples/lighthouse.js",
     "client-cli": "node examples/lighthouse-client-cli.js"
+  },
+  "browser": {
+    "fs": false,
+    "path": false,
+    "os": false,
+    "crypto": false,
+    "stream": false,
+    "http": false,
+    "tls": false,
+    "zlib": false,
+    "https": false,
+    "net": false
   },
   "author": "Zevo",
   "license": "MIT"

@@ -38,6 +38,8 @@ class HashCast
     //add to front so hopefully searching duped messages will be faster
     this.discardPile.unshift(hash);
 
+    //TODO: filter by time
+
     //remove old hashes
     while(this.discardPile.length > this.discardPileSize)
     {

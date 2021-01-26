@@ -18,9 +18,12 @@ program
 const wss = new WebSocket.Server({ port: program.port });
 
 wss.on('connection', function connection(ws) {
+  console.log(req.socket.remoteAddress, "connected");
+
   ws.on('message', function incoming(message) {
     caster.onMessage(JSON.parse(message));
   });
+
 });
 
 console.log("listening on " + program.port);
