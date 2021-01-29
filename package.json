@@ -5,11 +5,17 @@
   "main": "examples/p2p-cli.js",
   "dependencies": {
     "arraybuffer-concat": "^0.0.1",
+    "buffer": "^6.0.3",
     "commander": "^6.1.0",
     "express": "^4.17.1",
     "protopost": "git+https://github.com/tehzevo/protopost.git",
     "sha.js": "^2.4.11",
     "ws": "^7.4.2"
+  },
+  "bin": {
+    "hashcast-client": "./examples/lighthouse-client-cli.js",
+    "hashcast-lighthouse": "./examples/lighthouse.js",
+    "hashcast-p2p": "./examples/p2p-cli.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

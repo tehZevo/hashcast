@@ -1,3 +1,5 @@
+#! /usr/bin/env node
+
 var readline = require('readline');
 const WebSocket = require('ws');
 var { Command } = require('commander');

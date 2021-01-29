@@ -1,3 +1,5 @@
+#! /usr/bin/env node
+
 const WebSocket = require('ws');
 var { Command } = require('commander');
 
