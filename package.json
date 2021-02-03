@@ -2,7 +2,7 @@
   "name": "hashcast",
   "version": "0.0.0",
   "description": "",
-  "main": "examples/p2p-cli.js",
+  
   "dependencies": {
     "arraybuffer-concat": "^0.0.1",
     "buffer": "^6.0.3",
