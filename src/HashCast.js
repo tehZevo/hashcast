@@ -160,4 +160,6 @@ class HashCast
   }
 }
 
+HashCast.utils = U;
+
 module.exports = HashCast;

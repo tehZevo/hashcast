@@ -1,6 +1,3 @@
-var HashCast = require("./src/HashCast.js")
-var utils = require("./src/utils.js")
-
-HashCast.utils = utils;
+var HashCast = require("./src/HashCast.js");
 
 module.exports = HashCast;
