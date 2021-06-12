@@ -1,28 +1,18 @@
+var Message = require("./Message.js");
 var U = require("./utils.js");
-
-//TODO: move to utils?
-function compareHashes(a, b)
-{
-  //TODO: pretty costly, maybe store hashes in messages
-  a = U.hashMessage(a);
-  b = U.hashMessage(b);
-  a = BigInt("0x" + a);
-  b = BigInt("0x" + b);
-  return a < b ? -1 : a > b ? 1 : 0;
-}
 
 class HashCast
 {
-  constructor(maxMessageSize, maxTime, mempoolSize, discardPileSize, cbReceive, cbSend)
+  constructor(maxMessageSize, maxTime, mempoolSize, seenSize, cbReceive, cbSend, updateTime=100)
   {
     this.mempool = [];
     //TODO: make this an object/set or something
-    this.discardPile = [];
+    this.seen = [];
 
     this.maxTime = maxTime;
     this.maxMessageSize = maxMessageSize;
     this.mempoolSize = mempoolSize;
-    this.discardPileSize = discardPileSize;
+    this.seenSize = seenSize;
 
     //function to call when a message is received
     this.cbReceive = cbReceive;
@@ -30,20 +20,22 @@ class HashCast
     //function to call when a new message is ready to be broadcast
     this.cbSend = cbSend;
 
+    this.updateTime = updateTime;
+
     this.update();
   }
 
-  addToDiscard(hash)
+  addToSeen(hash)
   {
     //add to front so hopefully searching duped messages will be faster
-    this.discardPile.unshift(hash);
+    this.seen.unshift(hash);
 
-    //TODO: filter by time
+    //TODO: sort and filter by time
 
     //remove old hashes
-    while(this.discardPile.length > this.discardPileSize)
+    while(this.seen.length > this.seenSize)
     {
-      this.discardPile.pop();
+      this.seen.pop();
     }
   }
 
@@ -53,7 +45,9 @@ class HashCast
     this.mempool.push(message);
 
     //sort ascending according to hash (lower hashes = stronger)
-    this.mempool.sort(compareHashes);
+    this.mempool.sort((a, b) => U.compareHashes(a.hash, b.hash));
+
+    //TODO: filter by time
 
     //trim off other messages
     while(this.mempool.length > this.mempoolSize)
@@ -64,66 +58,60 @@ class HashCast
 
   onMessage(message)
   {
-    //TODO: gzip b64?
+    //parse message
+    message = Message.fromUint8Array(U.hex2uint8(message));
 
-    //hash message
-    var hash = U.hashMessage(message);
+    //grab hash
+    var hash = message.stamp.getHashHex();
+
+    //check that stamp hash and message sig are valid
+    if(!message.verify())
+    {
+      console.log("message hash or signature invalid");
+      return;
+    }
 
     //if message length > max block size, discard
     if(message.data.length > this.maxMessageSize)
     {
-      console.log("message " + hash + " too big");
-
+      console.log("message " + hash + " too big (size: " + message.data.length + ")");
       return;
     }
 
     //verify message time
-    var dTime = Math.abs(Date.now() - message.time) / 1000;
+    var dTime = Math.abs(U.time() - message.stamp.time) / 1000;
     if(dTime > this.maxTime)
     {
       console.log("message " + hash + " too old or from too far in the future");
-
       return;
     }
 
-    //check discard pile
-    if(this.discardPile.includes(hash))
+    //check seen pile
+    if(this.seen.includes(hash))
     {
       console.log("already seen message " + hash);
-
       return;
     }
 
     //add to discard pile
-    this.addToDiscard(hash);
+    this.addToSeen(hash);
 
     //add to mempool
     this.addToMempool(message);
 
     if(this.cbReceive != null)
     {
-      this.cbReceive(message)
+      this.cbReceive(message);
     }
 
   }
 
-  /** mines and sends message */
-  sendMessage(data, difficulty)
-  {
-    console.log("mining message, looking for hash under", difficulty)
-    var message = U.mine(data, difficulty);
-
-    //add to queue in the normal fashion
-    this.onMessage(message);
-  }
-
   update()
   {
+    //TODO: trim mempool/seen
     if(this.mempool.length == 0)
     {
-      //TODO: make time configurable
-      setTimeout(() => this.update(), 1000);
-
+      setTimeout(() => this.update(), this.updateTime);
       return;
     }
 
@@ -137,7 +125,7 @@ class HashCast
 
     console.log("mempool", this.mempool.length);
 
-    setImmediate(() => this.update());
+    setTimeout(() => this.update(), this.updateTime);
   }
 
   getDifficulty()
@@ -159,7 +147,5 @@ class HashCast
     return maxHash;
   }
 }
-
-HashCast.utils = U;
 
 module.exports = HashCast;

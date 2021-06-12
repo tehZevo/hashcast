@@ -2,14 +2,16 @@
   "name": "hashcast",
   "version": "0.0.0",
   "description": "",
-  
   "dependencies": {
     "arraybuffer-concat": "^0.0.1",
     "buffer": "^6.0.3",
     "commander": "^6.1.0",
+    "concat-typed-array": "^2.0.0",
     "express": "^4.17.1",
     "protopost": "git+https://github.com/tehzevo/protopost.git",
     "sha.js": "^2.4.11",
+    "tweetnacl": "^1.0.3",
+    "tweetnacl-util": "^0.15.1",
     "ws": "^7.4.2"
   },
   "bin": {
@@ -36,5 +38,8 @@
     "net": false
   },
   "author": "Zevo",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "webpack": "^5.38.1"
+  }
 }
