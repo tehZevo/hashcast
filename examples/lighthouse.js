@@ -22,12 +22,13 @@ program
   .option("-t, --max-time <number>", "max time difference (in both directions) in seconds", 60, parseInt)
   .option("-m, --mempool <number>", "max blocks in mempool", 1000, parseInt)
   .option("-d, --discard <number>", "max hashes in discard pile", 1000000, parseInt)
+  .option("-u, --update-time <number>", "update time in milliseconds", 100, parseInt)
   .parse(process.argv);
 
 
 function onMessage(message)
 {
-  caster.onMessage(message);
+  caster.receive(message);
 }
 
 var api = new ProtoPost({
@@ -76,17 +77,15 @@ async function send(message)
   console.log("done broadcast");
 }
 
-async function receive(message)
-{
-  // console.log(">> got message:", message.data);
-}
-
 //create caster
 var caster = new HashCast(
   program.blockSize,
   program.maxTime,
   program.mempool,
   program.discard,
-  receive,
-  send
 );
+
+caster.on("send", send);
+
+//automatically update every 100 ms
+setInterval(() => caster.update(), program.updateTime);

@@ -2,7 +2,7 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
-    <title>HashCast Lighthouse Client</title>
+    <title>HashCast Lighthouse</title>
     <link rel="stylesheet" href="bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
@@ -12,8 +12,6 @@
     <script src="hashcast.bundle.js"></script>
     <script src="components.js"></script>
     <script src="protopostClient.js"></script>
-    <script src="hcClient.js"></script>
-    <!-- <script src="testClient.js"></script> -->
   </head>
   <body>
     <div id="app">
@@ -24,16 +22,54 @@
     var app = new Vue({
       el: '#app',
       data: {
-        messages: [
-          // {user: "Zevo", data: "hi"},
-          // {user: "Kaydax", data: "bye"}
-        ]
+        messages: []
       }
     })
 
+    //generate keypair
+    var keypair = HashCast.utils.generateKeypair();
+
+    /** send text message */
+    function sendMessage(text)
+    {
+      var data = HashCast.utils.nacl.util.decodeUTF8(text);
+      //mint stamp and send message
+      caster.send(data, keypair);
+    }
+
+    //create hashcast caster
+    //TODO: check to make sure these are sane (see lighthouse caster)
+    var caster = new HashCast.HashCast(
+      1024,
+      60,
+      1000,
+      1000000,
+    );
+
+    setInterval(() => caster.update(), 1000);
+
+    caster.on("receive", (message) =>
+    {
+      var pubkeyhex = HashCast.utils.uint8hex(message.stamp.pubkey);
+      app.messages.push({
+        user: "Anon",
+        data: new TextDecoder().decode(message.data),
+        icon: `https://avatars.dicebear.com/api/bottts/${pubkeyhex}.svg`
+      });
+    });
+
+    //send messages to lighthouse (yes.. including ones we've already seen)
+    caster.on("send", (message) =>
+    {
+      protopostClient("/", message.toHex());
+    });
+
+    //whenever server sends message, treat as hashcast message and process it
     var webSocket = new WebSocket("ws://" + location.host);
     webSocket.onmessage = function(event) {
-      onMessage(event.data);
+      //this should just be a string
+      var message = JSON.parse(event.data);
+      caster.receive(message);
     }
     </script>
   </body>

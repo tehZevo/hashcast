@@ -45,7 +45,7 @@ lighthouses.forEach((e) =>
 {
   e.on("message", (message) =>
   {
-    caster.onMessage(JSON.parse(message));
+    caster.receive(JSON.parse(message));
   });
 
   e.on("error", (error) =>
@@ -70,9 +70,13 @@ var caster = new HashCast(
   program.maxTime,
   program.mempool,
   program.discard,
-  receive,
-  send
 );
+
+caster.on("send", send);
+caster.on("receive", receive);
+
+//automatically update every 100 ms
+setInterval(() => caster.update(), program.updateTime);
 
 //interaction (sending messages)
 var rl = readline.createInterface({

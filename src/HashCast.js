@@ -1,11 +1,15 @@
+var EventEmitter2 = require("eventemitter2");
+
 var Message = require("./Message.js");
 var Stamp = require("./Stamp.js");
 var U = require("./utils.js");
 
-class HashCast
+class HashCast extends EventEmitter2
 {
-  constructor(maxMessageSize, maxTime, mempoolSize, seenSize, cbReceive, cbSend, updateTime=100)
+  constructor(maxMessageSize, maxTime, mempoolSize, seenSize)
   {
+    super();
+
     this.mempool = [];
     //TODO: make this an object/set or something
     this.seen = [];
@@ -14,23 +18,13 @@ class HashCast
     this.maxMessageSize = maxMessageSize;
     this.mempoolSize = mempoolSize;
     this.seenSize = seenSize;
-
-    //function to call when a valid message is received
-    this.cbReceive = cbReceive;
-
-    //function to call when a new message is ready to be broadcast
-    this.cbSend = cbSend;
-
-    this.updateTime = updateTime;
-
-    this.update();
   }
 
   /** mines a stamp and sends a message */
   send(data, keypair)
   {
     //get current difficulty (TODO: some kind of tolerance parameter for how aggressive to mine?)
-    var difficulty = getDifficulty();
+    var difficulty = this.getDifficulty();
 
     //mine stamp
     var stamp = Stamp.mint(keypair.publicKey, difficulty);
@@ -43,14 +37,13 @@ class HashCast
   {
     //create and sign message
     var message = new Message(data, stamp);
-    message.sign(kp.secretKey);
+    message.sign(keypair.secretKey);
 
     //encode
-    message = message.toUint8Array();
-    message = HashCast.utils.uint8hex(message);
+    message = message.toHex();
 
-    //trigger onmessage as if we are seeing a new message
-    this.onMessage(message);
+    //trigger receive as if we are seeing a new message
+    this.receive(message);
   }
 
   addToSeen(hash)
@@ -84,7 +77,7 @@ class HashCast
     }
   }
 
-  onMessage(message)
+  receive(message)
   {
     //parse message
     message = Message.fromUint8Array(U.hex2uint8(message));
@@ -127,11 +120,7 @@ class HashCast
     //add to mempool
     this.addToMempool(message);
 
-    if(this.cbReceive != null)
-    {
-      this.cbReceive(message);
-    }
-
+    this.emit("receive", message);
   }
 
   update()
@@ -146,14 +135,9 @@ class HashCast
     //hashes should already be sorted
     var message = this.mempool.shift(); //remove first from mempool (strongest hash)
 
-    if(this.cbSend != null)
-    {
-      this.cbSend(message);
-    }
+    this.emit("send", message);
 
     console.log("mempool", this.mempool.length);
-
-    setTimeout(() => this.update(), this.updateTime);
   }
 
   getDifficulty()

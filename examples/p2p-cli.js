@@ -51,13 +51,17 @@ var caster = new HashCast(
   program.maxTime,
   program.mempool,
   program.discard,
-  receive,
-  send
 );
+
+caster.on("send", send);
+caster.on("receive", receive);
+
+//automatically update every 100 ms
+setInterval(() => caster.update(), program.updateTime);
 
 //add protopost listener
 new ProtoPost({
-  broadcast: (data) => caster.onMessage(data)
+  broadcast: (data) => caster.receive(data)
 }).start(program.port);
 
 //interaction (sending messages)
