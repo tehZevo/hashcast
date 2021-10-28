@@ -1,4 +1,5 @@
 var Message = require("./Message.js");
+var Stamp = require("./Stamp.js");
 var U = require("./utils.js");
 
 class HashCast
@@ -14,7 +15,7 @@ class HashCast
     this.mempoolSize = mempoolSize;
     this.seenSize = seenSize;
 
-    //function to call when a message is received
+    //function to call when a valid message is received
     this.cbReceive = cbReceive;
 
     //function to call when a new message is ready to be broadcast
@@ -23,6 +24,33 @@ class HashCast
     this.updateTime = updateTime;
 
     this.update();
+  }
+
+  /** mines a stamp and sends a message */
+  send(data, keypair)
+  {
+    //get current difficulty (TODO: some kind of tolerance parameter for how aggressive to mine?)
+    var difficulty = getDifficulty();
+
+    //mine stamp
+    var stamp = Stamp.mint(keypair.publicKey, difficulty);
+
+    this.sendPremine(data, stamp, keypair);
+  }
+
+  /** send with a premined stamp */
+  sendPremine(data, stamp, keypair)
+  {
+    //create and sign message
+    var message = new Message(data, stamp);
+    message.sign(kp.secretKey);
+
+    //encode
+    message = message.toUint8Array();
+    message = HashCast.utils.uint8hex(message);
+
+    //trigger onmessage as if we are seeing a new message
+    this.onMessage(message);
   }
 
   addToSeen(hash)

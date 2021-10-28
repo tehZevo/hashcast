@@ -6,6 +6,7 @@ const express = require('express');
 const WebSocket = require('ws');
 var { Command } = require('commander');
 var ProtoPost = require("protopost");
+var ppcl = ProtoPost.client
 
 var HashCast = require("../src/HashCast.js");
 var U = require("../src/utils.js");
@@ -61,7 +62,7 @@ async function send(message)
   //TODO: broadcast to lighthouse peers via protopost
   await Promise.all(program.peers.map((peer) => {
     console.log("sending to", peer);
-    return protopostClient(peer, "/", messageAsHex);
+    return ppcl(peer, "/", messageAsHex);
   }));
 
   //yell at web clients too

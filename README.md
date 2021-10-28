@@ -34,10 +34,9 @@ docker run -d --restart unless-stopped -p 7979:7979 --name hashcast zevo/hashcas
 ```
 
 # TODO
-* transition to pubkey stamps
 * spec for message format (eg [time, nonce, data]); then pass these arrays around instead of json
   * perhaps include length of message + magic number at the start?
-* webpack
 * web ui with chat and client-side mining
-* separate lighthouse code from
+* separate lighthouse code from main hashcast repo
 * do we need to store stamp hashes in transit? do we need to verify that the signer knew the hash?
+* what about just updating (filter/broadcast) every time a message is received?

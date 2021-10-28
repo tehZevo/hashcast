@@ -1,22 +1,28 @@
-.app, html, body {
+#app, .app, html, body {
     height: 100%;
     margin: 0;
 }
 
-.app {
+body {
+  height:100%;
+}
+
+#app, .app {
   display: flex;
   flex-direction: column;
+  height:100%;
 }
 
 .messages {
   flex: 1;
   display: flex;
   flex-direction: column;
-  margin: 1em;
+  overflow-y: auto;
+  padding: 1em;
 }
 
 .message {
-  flex: 1;
+
 }
 
 .message .message-content {
@@ -26,10 +32,12 @@
 
 .navbar {
   /* flex-grow: 1; */
+  flex: 0;
 }
 
 .chat-input {
   padding:8px;
-  position: absolute;
-  bottom: 0;
+  /* position: absolute; */
+  /* bottom: 0; */
+  flex: 0;
 }

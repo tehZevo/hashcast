@@ -81,7 +81,10 @@ Vue.component('message', {
   template: `
   <div class="message">
     <div class="card border-primary mb-3">
-      <div class="card-header">{{message.user}}</div>
+      <div class="card-header">
+        <img :src="message.icon" width="32" />
+        {{message.user}}
+      </div>
       <div class="card-body message-content">
         {{message.data}}
       </div>

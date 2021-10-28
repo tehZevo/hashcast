@@ -60,6 +60,11 @@ class Message
     ]);
   }
 
+  toHexNoSig()
+  {
+    return U.uint8hex(this.toUint8ArrayNoSig());
+  }
+
   toUint8Array()
   {
     return U.concatUint8Arrays([
@@ -67,6 +72,11 @@ class Message
       this.sig,
       this.data
     ]);
+  }
+
+  toHex()
+  {
+    return U.uint8hex(this.toUint8Array());
   }
 
   print()
