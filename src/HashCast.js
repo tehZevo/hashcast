@@ -66,7 +66,7 @@ class HashCast extends EventEmitter2
     this.mempool.push(message);
 
     //sort ascending according to hash (lower hashes = stronger)
-    this.mempool.sort((a, b) => U.compareHashes(a.hash, b.hash));
+    this.mempool.sort((a, b) => U.compareHashes(a.stamp.getHashHex(), b.stamp.getHashHex()));
 
     //TODO: filter by time
 
@@ -150,7 +150,7 @@ class HashCast extends EventEmitter2
     var maxHash = [...Array(64).keys()].map((e) => "f").join("");
     if(this.mempool.length > 0)
     {
-      maxHash = U.hashMessage(this.mempool[0]);
+      maxHash = this.mempool[0].stamp.getHashHex(); //TODO: we can trust the hash here right?
       //subtract 1 to beat current best hash
       maxHash = BigInt("0x" + maxHash) - BigInt("0x1");
       maxHash = maxHash.toString(16);
